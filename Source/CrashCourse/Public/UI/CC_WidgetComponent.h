@@ -1,0 +1,44 @@
+// Copyright WJW
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "AttributeSet.h"
+#include "Components/WidgetComponent.h"
+#include "CC_WidgetComponent.generated.h"
+
+class UAttributeSet;
+class UAbilitySystemComponent;
+class UCC_AttributeSet;
+class ACC_BaseCharacter;
+class UCC_AbilitySystemComponent;
+
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+class CRASHCOURSE_API UCC_WidgetComponent : public UWidgetComponent
+{
+	GENERATED_BODY()
+
+protected:
+	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, Category = "Crash|Attributes")
+	TMap<FGameplayAttribute, FGameplayAttribute> AttributeMap;
+
+private:
+	TWeakObjectPtr<ACC_BaseCharacter> CrashCharacter;
+	TWeakObjectPtr<UCC_AbilitySystemComponent> AbilitySystemComponent;
+	TWeakObjectPtr<UCC_AttributeSet> AttributeSet;
+
+	
+	void InitAbilitySystemData();
+	bool IsASCInitialized() const;
+	void InitializeAttributeDelegate();
+	void BindWidgetToAttributeChanges(UWidget* WidgetObject, const TTuple<FGameplayAttribute, FGameplayAttribute>& Pair) const;
+
+	UFUNCTION()
+	void OnASCInitialized(UAbilitySystemComponent* ASC, UAttributeSet* AS);
+
+	UFUNCTION()
+	void BindToAttributeChanges();
+
+};
