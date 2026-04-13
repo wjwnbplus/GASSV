@@ -7,7 +7,7 @@
 #include "AbilitySystem/CC_AbilitySystemComponent.h"
 #include "AbilitySystem/CC_AttributeSet.h"
 #include "Manager/CC_EnemyManagerSubsystem.h"
-#include "Manager/CC_ObjectPoolManagerSubsystem.h"
+#include "Manager/CC_PawnManagerSubsystem.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -52,9 +52,21 @@ void ACC_EnemyCharacter::StopMovementUntilLanded()
 	}
 }
 
-void ACC_EnemyCharacter::OnSpawnFromPool()
+
+void ACC_EnemyCharacter::RegisterPawn(APawn* InPawn)
 {
-	ResetAttributes();	
+	if (HasAuthority())
+	{
+		GetWorld()->GetGameInstance()->GetSubsystem<UCC_PawnManagerSubsystem>()->RegisterAIPawn(this);
+	}
+}
+
+void ACC_EnemyCharacter::UnregisterPawn(APawn* InPawn)
+{
+	if (HasAuthority())
+	{
+		GetWorld()->GetGameInstance()->GetSubsystem<UCC_PawnManagerSubsystem>()->UnregisterAIPawn(this);
+	}
 }
 
 void ACC_EnemyCharacter::EnableMovementOnLanded(const FHitResult& Hit)
@@ -63,22 +75,38 @@ void ACC_EnemyCharacter::EnableMovementOnLanded(const FHitResult& Hit)
 	LandedDelegate.RemoveAll(this);
 }
 
+
+
 void ACC_EnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// GAS 初始化
 	if (!IsValid(GetAbilitySystemComponent())) return;
-
 	GetAbilitySystemComponent()->InitAbilityActorInfo(this,this);
+	// 自定义广播，方便UI等处监听
 	OnASCInitialized.Broadcast(GetAbilitySystemComponent(),GetAttributeSet());
-	// 敌人由AIController控制，只在服务端执行
+
+	// 首次创建，执行一次出池逻辑
+	OnSpawnFromPool();
+}
+
+void ACC_EnemyCharacter::OnSpawnFromPool()
+{
 	if (!HasAuthority()) return;
 	GiveStartupAbilities();
 	InitializeAttributes();
 	
+	// 重新注册监听器（防止回收时被移除）
 	UCC_AttributeSet* CC_AttributeSet = Cast<UCC_AttributeSet>(GetAttributeSet());
-	if (!IsValid(CC_AttributeSet)) return;	
-	GetAbilitySystemComponent()->GetGameplayAttributeValueChangeDelegate(CC_AttributeSet->GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthChanged);
+	if (IsValid(CC_AttributeSet))
+	{
+		// 先移除旧的，防止重复注册
+		// 委托存在ASC中，出入池需要清理
+		GetAbilitySystemComponent()->GetGameplayAttributeValueChangeDelegate(CC_AttributeSet->GetHealthAttribute()).RemoveAll(this);
+		GetAbilitySystemComponent()->GetGameplayAttributeValueChangeDelegate(CC_AttributeSet->GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthChanged);
+	}
+	SetAlive(true);
 }
 
 void ACC_EnemyCharacter::HandleDeath()

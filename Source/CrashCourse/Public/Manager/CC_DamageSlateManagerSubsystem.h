@@ -6,6 +6,8 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "CC_DamageSlateManagerSubsystem.generated.h"
 
+class UCC_DamageFontConfig;
+class UCC_DamageSlateConfig;
 class SCC_DamageTextCanvas;
 
 USTRUCT()
@@ -17,7 +19,7 @@ struct FDamageInfo
 	
 	FVector HitLocation = FVector::ZeroVector;
 
-	float LifeTime = 1.5f;
+	float LifeTime = 2.f;
 
 	float VerticalOffset = 0.f;
 
@@ -29,7 +31,7 @@ struct FDamageInfo
 /**
  * 
  */
-UCLASS()
+UCLASS(Abstract,Blueprintable)
 class CRASHCOURSE_API UCC_DamageSlateManagerSubsystem : public UTickableWorldSubsystem
 {
 	GENERATED_BODY()
@@ -37,6 +39,8 @@ class CRASHCOURSE_API UCC_DamageSlateManagerSubsystem : public UTickableWorldSub
 public:
 	//~ Begin UWorldSubsystem Interface
 	//生命周期函数，当游戏实例关闭、或者地图切换导致 Subsystem 被销毁时，引擎会自动调用这个函数。
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 	virtual void Deinitialize() override;
 	//~ End of UWorldSubsystem Interface
 	
@@ -50,12 +54,18 @@ public:
 
 	TArray<FDamageInfo>* GetActiveDamageNumbers();
 
+	UCC_DamageFontConfig* GetFontConfig() const {return FontConfig;}
+
 private:
+		
 	UPROPERTY()
 	TArray<FDamageInfo> ActiveDamageNumbers;
 
 	TSharedPtr<SCC_DamageTextCanvas> DamageTextCanvas;
 
 	uint8 bWidgetInitialized : 1 = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Crash")
+	TObjectPtr<UCC_DamageFontConfig> FontConfig;
 };
 

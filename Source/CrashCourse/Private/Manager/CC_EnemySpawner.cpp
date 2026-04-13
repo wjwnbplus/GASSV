@@ -6,6 +6,7 @@
 #include "Algo/RandomShuffle.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "Manager/CC_EnemyManagerSubsystem.h"
+#include "Manager/CC_PawnManagerSubsystem.h"
 
 
 TSubclassOf<ACharacter> UMonsterDataAsset::GetMonsterCharacterClass(const uint8 MonsterID)
@@ -49,23 +50,15 @@ float ACC_EnemySpawner::GetMonsterSpeed(const uint8 MonsterID) const
 void ACC_EnemySpawner::SpawnEnemy()
 {	
 	// 用 PlayerController 获取
-	TArray<APawn*> AllPlayerPawns;    
-	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	{
-		if (APlayerController* PC = It->Get())
-		{
-			if (APawn* Pawn = PC->GetPawn())
-			{
-				AllPlayerPawns.Add(Pawn);
-			}
-		}
-	}
+	TArray<APawn*> AllPlayerPawns = GetWorld()->GetGameInstance()->GetSubsystem<UCC_PawnManagerSubsystem>()->GetAllPlayerPawns();
+
     // 如果没有玩家，直接返回
 	if (AllPlayerPawns.IsEmpty())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("no player pawn"));
 		return;
 	}    
-		
+	UE_LOG(LogTemp, Warning, TEXT("get %d player pawns"), AllPlayerPawns.Num());
 	for (APawn* PlayerPawn : AllPlayerPawns)
 	{
 		FEnvQueryRequest QueryRequest(EnemySpawnLocationQuery, PlayerPawn);

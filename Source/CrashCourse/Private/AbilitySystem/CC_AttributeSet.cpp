@@ -5,9 +5,10 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameplayEffectExtension.h"
+#include "Character/CC_BaseCharacter.h"
+#include "Character/CC_PlayerCharacter.h"
 #include "GameFramework/Character.h"
 #include "GameplayTags/CCTags.h"
-#include "Manager/CC_DamageSlateManagerSubsystem.h"
 #include "Net/UnrealNetwork.h"
 
 void UCC_AttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -113,6 +114,7 @@ void UCC_AttributeSet::OnRep_MaxArmor(const FGameplayAttributeData& OldValue)
 void UCC_AttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data,
 	FEffectProperties& EffectProperties) const
 {
+	
 	EffectProperties.EffectContextHandle = Data.EffectSpec.GetContext();
 	EffectProperties.SourceASC = EffectProperties.EffectContextHandle.GetOriginalInstigatorAbilitySystemComponent();
 
@@ -132,7 +134,7 @@ void UCC_AttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData&
 			EffectProperties.SourceCharacter = Cast<ACharacter>(EffectProperties.SourceController->GetPawn());
 		}
 	}
-
+	
 	if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
 	{
 		EffectProperties.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
@@ -155,10 +157,8 @@ void UCC_AttributeSet::ApplyIncomingDamage(const FEffectProperties& Props, const
 		// 计算新的体力并分配。
 		const float NewHealth = GetHealth() - LocalIncomingDamage;
 		SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
-		UE_LOG(LogTemp, Log, TEXT("SVAttributeSet - Damage Applied"));
-		
-		const bool bFatal = NewHealth <= 0.f;
-		if (bFatal)
+
+		if (NewHealth <= 0.f)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Died"));
 		}
@@ -173,8 +173,18 @@ void UCC_AttributeSet::ApplyIncomingDamage(const FEffectProperties& Props, const
 	const FVector TargetLocation = Props.TargetAvatarActor->GetActorLocation();
 	const FVector SourceLocation = Props.SourceAvatarActor->GetActorLocation();
 	const FVector DamageTextLocation = (TargetLocation + SourceLocation) / 2.f;
+
 	
-	// 在两个 Actor 位置之间显示伤害文本。
-	GetWorld()->GetSubsystem<UCC_DamageSlateManagerSubsystem>()->ShowDamageNumber(DamageForText, DamageTextLocation);
+	if (ACC_PlayerCharacter* SourcePlayerCharacter = Cast<ACC_PlayerCharacter>(Props.SourceCharacter))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Source Character show damage"));
+		SourcePlayerCharacter->Client_ShowDamage(DamageForText, DamageTextLocation);
+	}
 	
+	if (ACC_PlayerCharacter* TargetPlayerCharacter = Cast<ACC_PlayerCharacter>(Props.TargetCharacter))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Target Character show damage"));
+		TargetPlayerCharacter->Client_ShowDamage(DamageForText, DamageTextLocation);
+	}
+
 }

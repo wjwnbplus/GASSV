@@ -35,9 +35,16 @@ void ACC_Projectile::NotifyActorBeginOverlap(AActor* OtherActor)
 	Payload.Target = PlayerCharacter;
 
 	UCC_BlueprintLibrary::SendDamageEventToPlayer(PlayerCharacter, DamageEffect, Payload, CCTags::SetByCaller::Projectile, Damage, CCTags::None);
- 
-	SpawnImpactEffects();
+
+	Multicast_SpawnImpactEffects();
 	Destroy();
+}
+
+void ACC_Projectile::Multicast_SpawnImpactEffects_Implementation()
+{
+	// 专业服务器不显示效果
+	if (GetNetMode()==NM_DedicatedServer) return;
+	SpawnImpactEffects();
 }
 
 

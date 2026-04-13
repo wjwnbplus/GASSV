@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
+#include "Interface/CC_CombatInterface.h"
 #include "CC_BaseCharacter.generated.h"
 
 namespace CrashTags
@@ -21,7 +22,7 @@ class UGameplayAbility;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FASCInitialized, UAbilitySystemComponent*, ASC, UAttributeSet*, AS);
 
 UCLASS(Abstract)
-class CRASHCOURSE_API ACC_BaseCharacter : public ACharacter, public IAbilitySystemInterface
+class CRASHCOURSE_API ACC_BaseCharacter : public ACharacter, public IAbilitySystemInterface, public ICC_CombatInterface
 {
 	GENERATED_BODY()
 
@@ -33,8 +34,7 @@ public:
 	bool IsAlive() const { return bAlive; }
 	void SetAlive(bool bAliveStatus) { bAlive = bAliveStatus; }
 
-	UPROPERTY(BlueprintAssignable)
-	FASCInitialized OnASCInitialized;
+
 
 	UFUNCTION(BlueprintCallable, Category = "Crash|Death")
 	virtual void HandleRespawn();
@@ -44,6 +44,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void RotateToTarget(AActor* RotateTarget);
+
+	UPROPERTY(BlueprintAssignable)
+	FASCInitialized OnASCInitialized;
 
 	UPROPERTY(EditAnywhere, Category = "Crash|AI")
 	float SearchRange{1000.f};

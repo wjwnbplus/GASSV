@@ -92,6 +92,7 @@ void ACC_PlayerController::Tertiary()
 {
 	ActivateAbility(CCTags::CCAbilities::Tertiary);
 }
+
 void ACC_PlayerController::ActivateAbility(const FGameplayTag& AbilityTag) const
 {
 	if (!IsAlive()) return;

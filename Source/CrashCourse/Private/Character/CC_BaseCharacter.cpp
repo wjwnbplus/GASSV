@@ -15,6 +15,7 @@ namespace CrashTags
 ACC_BaseCharacter::ACC_BaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
 	// 专业服务器设置
 	// Tick and refresh bone transforms whether rendered or not - for bone updates on a dedicated server
 	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
@@ -71,6 +72,7 @@ void ACC_BaseCharacter::HandleDeath()
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("%s has died!"), *GetName()));
 	}
 }
+
 
 void ACC_BaseCharacter::HandleRespawn()
 {
