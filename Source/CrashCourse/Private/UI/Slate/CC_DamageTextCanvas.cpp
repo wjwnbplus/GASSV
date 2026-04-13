@@ -4,18 +4,22 @@
 #include "UI/Slate/CC_DamageTextCanvas.h"
 
 #include "SlateOptMacros.h"
-#include "Engine/Font.h"
 #include "Fonts/FontMeasure.h"
+#include "Engine/Font.h"
 #include "Manager/CC_DamageSlateManagerSubsystem.h"
+#include "UI/Slate/CC_DamageFontConfig.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SCC_DamageTextCanvas::Construct(const FArguments& InArgs, UCC_DamageSlateManagerSubsystem* InManager)
 {
+	UE_LOG(LogTemp, Warning, TEXT("State Construct"));
 	Manager = InManager;
 	SetVisibility(EVisibility::HitTestInvisible);
-	const FString FontPath = TEXT("/Game/Assets/Fonts/David_Libre/DavidLibre-Medium_Font.DavidLibre-Medium_Font");
-	Font = LoadObject<UFont>(nullptr, *FontPath);
+	if (Manager.IsValid())
+	{
+		FontConfig = Manager->GetFontConfig();
+	}
 }
 
 int32 SCC_DamageTextCanvas::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry,
@@ -24,16 +28,18 @@ int32 SCC_DamageTextCanvas::OnPaint(const FPaintArgs& Args, const FGeometry& All
 {
 	int32 ResultLayerID = LayerId;
 
+	// 获取DPI缩放，用于计算绘制位置。
 	const float DPI_Scale = AllottedGeometry.GetAccumulatedLayoutTransform().GetScale();
 	if (!Manager.IsValid() || FMath::IsNearlyZero(DPI_Scale))
 	{
+		UE_LOG(LogTemp, Error, TEXT("Early return because: ManagerValid=%d, DPI_Scale=%.6f"), Manager.IsValid(), DPI_Scale);
 		return ResultLayerID;
 	}
 	
 	FSlateFontInfo FontInfo;
-	if (Font)
+	if (FontConfig.IsValid())
 	{
-		FontInfo = FSlateFontInfo(Font, 24.f);
+		FontInfo = FSlateFontInfo(FontConfig->GetFont(),  FontConfig->GetFontSize());
 	}
 	else
 	{
@@ -43,8 +49,13 @@ int32 SCC_DamageTextCanvas::OnPaint(const FPaintArgs& Args, const FGeometry& All
 
 	const TSharedRef<FSlateFontMeasure> FontMeasure = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
 
-	for (const FDamageInfo& Info : *Manager->GetActiveDamageNumbers())
+	TArray<FDamageInfo>* ActiveDamages = Manager->GetActiveDamageNumbers();
+	const int32 DamageCount = ActiveDamages->Num();
+	
+	for (int32 i = 0; i < DamageCount; ++i)
 	{
+		const FDamageInfo& Info = (*ActiveDamages)[i];
+		
 		// 只有当此次 Damage Text 的 3D 位置实际绘制在屏幕上时才进入此分支。
 		if (Info.bIsOnScreen)
 		{
@@ -60,7 +71,7 @@ int32 SCC_DamageTextCanvas::OnPaint(const FPaintArgs& Args, const FGeometry& All
 			// 根据剩余寿命调整透明度。
 			float Alpha = Info.LifeTime > 0.5f ? 1.f : Info.LifeTime / 0.5f;
 			FLinearColor TextColor = FLinearColor(1.f, 0.8f, 0.2f, Alpha);
-
+			
 			FSlateDrawElement::MakeText(
 				OutDrawElements,
 				++ResultLayerID,

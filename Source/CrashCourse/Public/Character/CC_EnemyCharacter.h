@@ -39,6 +39,9 @@ public:
 	void StopMovementUntilLanded();
 
 	virtual void OnSpawnFromPool() override;
+
+	virtual void RegisterPawn(APawn* InPawn) override;
+	virtual void UnregisterPawn(APawn* InPawn) override;
 	
 protected:
 	virtual void BeginPlay() override;

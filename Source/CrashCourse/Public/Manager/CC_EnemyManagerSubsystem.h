@@ -11,7 +11,7 @@ class ACC_EnemySpawner;
 /**
  * 
  */
-UCLASS(Abstract, BlueprintType)
+UCLASS(Abstract, Blueprintable)
 class CRASHCOURSE_API UCC_EnemyManagerSubsystem : public UTickableWorldSubsystem
 {
 	GENERATED_BODY()

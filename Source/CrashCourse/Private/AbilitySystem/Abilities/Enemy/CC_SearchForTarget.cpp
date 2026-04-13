@@ -41,6 +41,12 @@ void UCC_SearchForTarget::StartSearch()
 {
 	if (bDrawDebugs) GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("UCC_SearchForTarget::StartSearch")));
 	if (!OwningEnemy.IsValid()) return;
+
+	if (SearchDelayTask)
+	{
+		SearchDelayTask->EndTask();
+		SearchDelayTask = nullptr;
+	}
 	
 	const float SearchDelay = FMath::RandRange(OwningEnemy->MinAttackDelay, OwningEnemy->MaxAttackDelay);
 	SearchDelayTask = UAbilityTask_WaitDelay::WaitDelay(this, SearchDelay);
@@ -107,6 +113,14 @@ void UCC_SearchForTarget::AttackTarget(TEnumAsByte<EPathFollowingResult::Type> R
 		StartSearch();
 		return;
 	}
+	
+	// 清理旧的 AttackDelayTask，防止累积
+	if (AttackDelayTask)
+	{
+		AttackDelayTask->EndTask();
+		AttackDelayTask = nullptr;
+	}
+	
 	OwningEnemy->RotateToTarget(TargetBaseCharacter.Get());
 	
 	AttackDelayTask = UAbilityTask_WaitDelay::WaitDelay(this, OwningEnemy->GetTimelineLength());

@@ -21,6 +21,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Crash|Damage", meta = (ExposeOnSpawn, ClampMin = "0.0"))
 	float Damage{-25.f};
 
+	UFUNCTION(NetMulticast,Reliable)
+	void Multicast_SpawnImpactEffects();
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Crash|Projectile")
 	void SpawnImpactEffects();
 	

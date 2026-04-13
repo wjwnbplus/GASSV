@@ -24,8 +24,11 @@ public:
 	virtual void OnRep_PlayerState() override;
 	virtual void UnPossessed() override;
 
-	virtual void RegisterPawn(APawn* InPawn);
-	virtual void UnregisterPawn(APawn* InPawn);
+	virtual void RegisterPawn(APawn* InPawn) override;
+	virtual void UnregisterPawn(APawn* InPawn) override;
+	
+	UFUNCTION(Client, Reliable)
+	void Client_ShowDamage(const float InDamageAmount, const FVector& InHitLocation);
 
 private:
 

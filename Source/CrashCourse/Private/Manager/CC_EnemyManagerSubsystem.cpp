@@ -3,7 +3,9 @@
 
 #include "Manager/CC_EnemyManagerSubsystem.h"
 
+#include "AbilitySystemComponent.h"
 #include "Character/CC_EnemyCharacter.h"
+#include "GameplayTags/CCTags.h"
 #include "Interface/CC_EnemyInterface.h"
 #include "Manager/CC_EnemySpawner.h"
 #include "Manager/CC_ObjectPoolManagerSubsystem.h"
@@ -105,6 +107,27 @@ ACharacter* UCC_EnemyManagerSubsystem::GetEnemyFromPool(uint8 InMonsterID) const
 
 void UCC_EnemyManagerSubsystem::ReturnToEnemyPool(ACC_EnemyCharacter* Enemy) const
 {
+	UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent();
+	if (IsValid(ASC))
+	{
+		// 1. 取消所有正在执行的能力
+		ASC->CancelAllAbilities();
+		
+		// 2. 清除所有能力定义
+		ASC->ClearAllAbilities();
+		
+		// 3. 移除所有激活的 Gameplay Effects（buff/debuff）
+		TArray<FActiveGameplayEffectHandle> ActiveEffectHandles = ASC->GetActiveGameplayEffects().GetAllActiveEffectHandles();
+		for (const FActiveGameplayEffectHandle& Handle : ActiveEffectHandles)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Removing GE: %s"), *Handle.ToString());
+			ASC->RemoveActiveGameplayEffect(Handle);
+		}
+
+		ASC->RemoveLooseGameplayTag(CCTags::Status::Dead);
+		
+		UE_LOG(LogTemp, Warning, TEXT("Cleaned ASC for %s before returning to pool"), *Enemy->GetName());
+	}
 	if (UCC_ObjectPoolManagerSubsystem* ObjectPoolManager = GetWorld()->GetGameInstance()->GetSubsystem<UCC_ObjectPoolManagerSubsystem>())
 	{
 		ObjectPoolManager->ReturnToPool(Enemy);

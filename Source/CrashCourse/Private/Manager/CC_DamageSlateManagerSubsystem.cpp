@@ -6,6 +6,25 @@
 #include "Kismet/GameplayStatics.h"
 #include "UI/Slate/CC_DamageTextCanvas.h"
 
+void UCC_DamageSlateManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+	
+	UE_LOG(LogTemp, Warning, TEXT("%s Initialize"), *GetClass()->GetName());
+}
+
+bool UCC_DamageSlateManagerSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+	if (!Super::ShouldCreateSubsystem(Outer))
+	{
+		return false;
+	}
+	// 获取当前World
+	const UWorld* World = Cast<UWorld>(Outer);
+	// 专用服务器不创建，无需飘字
+	return World != nullptr && !World->IsNetMode(NM_DedicatedServer);
+}
+
 void UCC_DamageSlateManagerSubsystem::Deinitialize()
 {
 	// 从视口中移除 Widget。
@@ -39,7 +58,7 @@ void UCC_DamageSlateManagerSubsystem::Tick(float DeltaTime)
 		ActiveDamageNumbers.Empty();
 		return;
 	}
-
+		
 	// 遍历当前可能显示在屏幕上的 Damage Text，更新其值。
 	// 倒序遍历，避免删除元素时导致索引错误。
 	for (int32 i = ActiveDamageNumbers.Num() - 1; i >= 0; --i)
@@ -68,7 +87,7 @@ TStatId UCC_DamageSlateManagerSubsystem::GetStatId() const
 }
 
 void UCC_DamageSlateManagerSubsystem::ShowDamageNumber(const float InDamageAmount, const FVector& InHitLocation)
-{
+{	
 	FDamageInfo NewInfo;
 	if (InDamageAmount <= 0.f)
 	{
@@ -80,6 +99,7 @@ void UCC_DamageSlateManagerSubsystem::ShowDamageNumber(const float InDamageAmoun
 		NewInfo.DamageAmountText = FString::SanitizeFloat(RoundDamage, 0);
 	}
 	NewInfo.HitLocation = InHitLocation;
+
 	ActiveDamageNumbers.Add(NewInfo);
 }
 
